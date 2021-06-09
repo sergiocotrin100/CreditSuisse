@@ -12,6 +12,7 @@ namespace Business
         readonly string EXPIRED = "EXPIRED";
         readonly string HIGHRISK = "HIGHRISK";
         readonly string MEDIUMRISK = "MEDIUMRISK";
+        readonly int DaysLate = 30;
 
         private TradeDTO Trade { get; set; }
 
@@ -64,7 +65,7 @@ namespace Business
                 if (this.Trade != null && this.Trade.NumberTrades > 0)
                 {
                     TimeSpan time = this.Trade.ReferenceDate - this.NextPaymentDate;
-                    return time.Days > 30;
+                    return time.Days > this.DaysLate;
                 }
 
                 return false;

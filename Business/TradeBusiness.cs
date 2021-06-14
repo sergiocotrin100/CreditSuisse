@@ -1,11 +1,10 @@
 ﻿using Core.Entities;
-using Core.Interfaces;
-using CrossCutting;
 using System;
+using System.Text;
 
 namespace Business
 {
-    public class TradeBusiness : ITrade
+    public class TradeBusiness
     {
         readonly double HIGHRISKVALUE = 1000.000;
         readonly double MEDIUMRISKVALUE = 1000.000;
@@ -14,116 +13,60 @@ namespace Business
         readonly string MEDIUMRISK = "MEDIUMRISK";
         readonly int DaysLate = 30;
 
-        private TradeDTO Trade { get; set; }
+        private TradeDTO Trade { get; set; }        
 
         public TradeBusiness(TradeDTO trade)
         {
             this.Trade = trade;
         }
-        public double Value
-        {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                    if (!string.IsNullOrWhiteSpace(this.Trade.CNAB))
-                        return this.Trade.CNAB.Split(' ')[0].ToDouble();
 
-                return 0;
+        private bool IsExpired(DateTime NextPaymentDate)
+        {
+            if (this.Trade != null && this.Trade.NumberTrades > 0)
+            {
+                TimeSpan time = this.Trade.ReferenceDate - NextPaymentDate;
+                return time.Days > this.DaysLate;
             }
+
+            return false;
         }
 
-        public string ClientSector
+        private bool IsHighRisk(Trade model)
         {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                    if (!string.IsNullOrWhiteSpace(this.Trade.CNAB))
-                        return this.Trade.CNAB.Split(' ')[1];
-
-                return string.Empty;
-            }
+            return (model.Value > this.HIGHRISKVALUE && this.IsClientPrivateSector(model.ClientSector));
         }
 
-        public DateTime NextPaymentDate
+        private bool IsMediumRisk(Trade model)
         {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                    if (!string.IsNullOrWhiteSpace(this.Trade.CNAB))
-                        return this.Trade.CNAB.Split(' ')[2].ToDateTime();
-
-                return DateTime.MinValue;
-            }
+            return (model.Value > this.MEDIUMRISKVALUE && this.IsClientPublicSector(model.ClientSector));
         }
 
-        public bool IsPoliticallyExposed => this.IsPoliticallyExposed;
-
-        private bool IsExpired
+        private bool IsClientPrivateSector(string clientSector)
         {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                {
-                    TimeSpan time = this.Trade.ReferenceDate - this.NextPaymentDate;
-                    return time.Days > this.DaysLate;
-                }
-
-                return false;
-            }
+            return clientSector.Equals("Private", StringComparison.OrdinalIgnoreCase);
         }
 
-        private bool IsHighRisk
+        private bool IsClientPublicSector(string clientSector)
         {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                {
-                    return (this.Value > this.HIGHRISKVALUE && this.IsClientPrivateSector);
-                }
-
-                return false;
-            }
-        }
-
-        private bool IsMediumRisk
-        {
-            get
-            {
-                if (this.Trade != null && this.Trade.NumberTrades > 0)
-                {
-                    return (this.Value > this.MEDIUMRISKVALUE && this.IsClientPublicSector);
-                }
-
-                return false;
-            }
-        }
-
-        private bool IsClientPrivateSector
-        {
-            get
-            {
-                return this.ClientSector.Equals("Private", StringComparison.OrdinalIgnoreCase);
-            }
-        }
-
-        private bool IsClientPublicSector
-        {
-            get
-            {
-                return this.ClientSector.Equals("Public", StringComparison.OrdinalIgnoreCase);
-            }
+            return clientSector.Equals("Public", StringComparison.OrdinalIgnoreCase);
         }
 
         public string GetCategory()
         {
-            if (this.IsExpired)
-                return this.EXPIRED;
-            else if (this.IsMediumRisk)
-                return this.MEDIUMRISK;
-            else if (this.IsHighRisk)
-                return this.HIGHRISK;
-            else
-                return string.Empty;
+            StringBuilder strResult = new StringBuilder();
+            foreach (var trade in this.Trade.Trades)
+            {
+                Trade model = new Trade(trade);
+
+                if (this.IsExpired(model.NextPaymentDate))
+                    strResult.AppendLine(this.EXPIRED);
+                else if (this.IsMediumRisk(model))
+                    strResult.AppendLine(this.MEDIUMRISK);
+                else if (this.IsHighRisk(model))
+                    strResult.AppendLine(this.HIGHRISK);
+            }
+
+            return strResult.ToString();
         }
     }
 }

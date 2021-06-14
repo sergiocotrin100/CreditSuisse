@@ -39,17 +39,17 @@ namespace CreditSuisse
             return ReferenceDate;
         }
 
-        static long GetNumberTrades()
+        static int GetNumberTrades()
         {
-            long NumberTrades = 0;
+            int NumberTrades = 0;
             do
             {
-                Console.WriteLine("Entre com o identificador da negociacao:");
+                Console.WriteLine("Entre com o identificador da negociação:");
                 var Value = Console.ReadLine();
-                NumberTrades = Value.ToLong();
+                NumberTrades = Value.ToInt();
                 if (NumberTrades <= 0)
                 {
-                    Console.WriteLine("Identificador invalido");
+                    Console.WriteLine("Identificador inválido");
                     continue;
                 }
                 else
@@ -61,43 +61,61 @@ namespace CreditSuisse
             return NumberTrades;
         }
 
-        static string GetCnab()
-        {
-            string Cnab = string.Empty;
-            do
-            {
-                Console.WriteLine("Entre com o CNAB:");
-                Cnab = Console.ReadLine();
-                if (string.IsNullOrWhiteSpace(Cnab) || Cnab.Length==0)
-                {
-                    Console.WriteLine("CNAB invalido");
-                    continue;
-                }
-                else if (Cnab.Split(' ').Length != 3)
-                {
-                    Console.WriteLine("CNAB está no formato inválido");
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
-            } while (true);
+        //static string GetTrade()
+        //{
+        //    string trade = string.Empty;
+        //    do
+        //    {
+        //        Console.WriteLine("Entre com a lista de Trade:");
+        //        trade = Console.ReadLine();
+        //        if (string.IsNullOrWhiteSpace(trade) || trade.Length==0)
+        //        {
+        //            Console.WriteLine("Trade inválido");
+        //            continue;
+        //        }
+        //        else if (trade.Split(' ').Length != 3)
+        //        {
+        //            Console.WriteLine("Trade está no formato inválido");
+        //            continue;
+        //        }
+        //        else
+        //        {
+        //            break;
+        //        }
+        //    } while (true);
 
-            return Cnab;
+        //    return trade;
+        //}
+
+        static List<string> GetTrade(int numberTrades)
+        {
+            List<string> lstTrades = new List<string>();
+            Console.WriteLine("Entre com a lista de Trade:");
+
+            for (int i = 0; i < numberTrades; i++)
+            {
+                string trade = Console.ReadLine();
+                if (!string.IsNullOrEmpty(trade))
+                {
+                    lstTrades.Add(trade);
+                }
+
+            }
+
+            return lstTrades;
         }
 
         static void Start()
         {
-            // Environment.Exit(1);
             Console.WriteLine("******************INICIO****************");
             var model = new TradeDTO();
             model.ReferenceDate = GetDate();
             model.NumberTrades = GetNumberTrades();
-            model.CNAB = GetCnab();
+            model.Trades = GetTrade(model.NumberTrades);
 
             var business = new Business.TradeBusiness(model);
-            Console.WriteLine($"A categoria é: {business.GetCategory()}");
+            Console.WriteLine(business.GetCategory());
+
             Console.WriteLine("******************FIM********************");
             Console.WriteLine();
             Start();
